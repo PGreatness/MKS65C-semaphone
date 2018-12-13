@@ -4,6 +4,7 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/types.h>
+#include <sys/shm.h>
 #include <errno.h>
 
 #define KEY 0xDEADBEEF
@@ -21,8 +22,36 @@
    int v;
    int shmid;
    char * data;
+   key_t key;
+   FILE * f;
+
    if (argc > 2) {
      perror("Too many arguments, please try again");
+     exit(1);
+   }
+
+   char * option = argv[1];
+
+   if (strcmp(option, "-c") == 0) {
+     f = fopen("textfile", "w");
+   }
+
+   if (strcmp(option, "-v") == 0) {
+     f = fopen("textfile", "r");
+   }
+
+   if (strcmp(option, "-r") == 0) {
+     remove("textfile");
+     exit(0);
+   }
+
+   if ((key = ftok("./textfile", 'R')) == -1) {
+    perror("ftok");
+    exit(1);
+   }
+
+   if ((shmid = shmget(key, 1024, 0644 | IPC_CREAT)) == -1) {
+
    }
 
    semd = semget(KEY, 1, IPC_CREAT | IPC_EXCL | 0644 );

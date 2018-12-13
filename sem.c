@@ -9,14 +9,10 @@
 
 #define KEY 0xDEADBEEF
 
-int main(int argc, char const *argv[]) {
+int main() {
   int semd;
   semd = semget(KEY, 1, 0);
 
-  if (argc > 2) {
-    perror("Too many arguments, please try again");
-    exit(1);
-  }
   struct sembuf sb;
   sb.sem_num = 0;
   sb.sem_flg = SEM_UNDO;
