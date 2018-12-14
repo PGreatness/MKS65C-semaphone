@@ -80,7 +80,7 @@ int main(int argc, char const *argv[]) {
 
     int await;
     await = semop(semd, &sb, 1);
-
+    
     if ((semctl(semd, 1, IPC_RMID)) == -1) {
       printf("Error %d: %s\n", errno, strerror(errno));
       exit(1);
