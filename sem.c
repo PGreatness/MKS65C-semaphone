@@ -4,23 +4,75 @@
 #include <string.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include <sys/shm.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #define KEY 0xDEADBEEF
 
 int main() {
+  int shmid;
   int semd;
-  semd = semget(KEY, 1, 0);
+  char * data;
+
+  if ((semd = semget(KEY, 1, 0)) == -1) {
+    printf("Error %d in main: %s\n", errno, strerror(errno));
+    exit(1);
+  }
+  printf("Got here 23");
+  if ((shmid = shmget(KEY, sizeof(KEY), 0644 | O_CREAT)) == -1) {
+    printf("Error %d in main: %s\n", errno, strerror(errno));
+    exit(1);
+  }
+  printf("Got here 28");
 
   struct sembuf sb;
   sb.sem_num = 0;
   sb.sem_flg = SEM_UNDO;
   sb.sem_op = -1;
   semop(semd, &sb, 1);
+  printf("Got here 35");
+  printf("Would you like to read or write?\n(W)rite\n(R)ead\n");
+  char choice[10];
+  fgets(choice, 10, stdin);
+  choice[strcspn(choice, "\n")] = '\0';
+  printf("Got here 40");
+  if (!strcmp(choice, "W")) {
+    printf("Writing to file\n");
+    if ((data = shmat(shmid, (void *)0, 0)) == -1) {
+      printf("Error %d in main: %s\n", errno, strerror(errno));
+      exit(1);
+    }
+    printf("Got here 47");
+    printf("Currently, this is in file\n%s\n", data);
+    printf("What would you like to add?\n");
+    char add[256];
+    fgets(add, 256, stdin);
+    add[strcspn(add, "\n")] = '\0';
 
-  printf("Got the semaphore!\n");
-  sleep(1);
+    strcpy(data, add);
+  }else{
+    printf("Reading from file\n");
+    FILE * f = open("textfile", O_RDONLY, 0644);
+    if (f == -1) {
+      printf("Error %d in main: %s\n", errno, strerror(errno));
+      exit(1);
+    }
+    printf("Got here 62");
+    char reading[1024];
+    int re = read(f, reading, 1023);
+    if (re == -1) {
+      printf("Error %d: %s\n", errno, strerror(errno));
+      exit(1);
+    }
+    printf("Got here 69");
+    if (re != NULL) {
+      printf("This was read:\n%s\n", re);
+    }else{
+      printf("Nothing read. Add something to begin.\n");
+    }
+  }
 
   sb.sem_op = 1;
   semop(semd, &sb, 1);
